@@ -11,55 +11,91 @@ export default function TabLayout() {
 		<Tabs
 			screenOptions={{
 				tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+				tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
 				headerShown: false,
+				tabBarStyle: {
+					backgroundColor: Colors[colorScheme ?? "light"].backgroundSecondary,
+					borderTopColor: Colors[colorScheme ?? "light"].border,
+					paddingTop: 8,
+					paddingBottom: 8,
+					height: 60,
+				},
+				tabBarLabelStyle: {
+					fontSize: 12,
+					fontWeight: '500',
+				},
 			}}
 		>
 			<Tabs.Screen
-				name="index"
+				name="home"
 				options={{
-					title: "Connect",
+					title: "Home",
 					tabBarIcon: ({ color, focused }) => (
 						<TabBarIcon
-							name={focused ? "wallet" : "wallet-outline"}
+							name={focused ? "home" : "home-outline"}
 							color={color}
 						/>
 					),
+				}}
+			/>
+			<Tabs.Screen
+				name="transfer"
+				options={{
+					title: "Send",
+					tabBarIcon: ({ color, focused }) => (
+						<TabBarIcon
+							name={focused ? "send" : "send-outline"}
+							color={color}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="withdraw"
+				options={{
+					title: "Withdraw",
+					tabBarIcon: ({ color, focused }) => (
+						<TabBarIcon
+							name={focused ? "arrow-down-circle" : "arrow-down-circle-outline"}
+							color={color}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="kyc"
+				options={{
+					title: "Profile",
+					tabBarIcon: ({ color, focused }) => (
+						<TabBarIcon
+							name={focused ? "person" : "person-outline"}
+							color={color}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="index"
+				options={{
+					href: null,
 				}}
 			/>
 			<Tabs.Screen
 				name="read"
 				options={{
-					title: "Read",
-					tabBarIcon: ({ color, focused }) => (
-						<TabBarIcon
-							name={focused ? "reader" : "reader-outline"}
-							color={color}
-						/>
-					),
+					href: null,
 				}}
 			/>
 			<Tabs.Screen
 				name="write"
 				options={{
-					title: "Write",
-					tabBarIcon: ({ color, focused }) => (
-						<TabBarIcon
-							name={focused ? "code-slash" : "code-slash-outline"}
-							color={color}
-						/>
-					),
+					href: null,
 				}}
 			/>
 			<Tabs.Screen
 				name="buy"
 				options={{
-					title: "Buy",
-					tabBarIcon: ({ color, focused }) => (
-						<TabBarIcon
-							name={focused ? "cart" : "cart-outline"}
-							color={color}
-						/>
-					),
+					href: null,
 				}}
 			/>
 		</Tabs>

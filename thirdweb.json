@@ -1,0 +1,29 @@
+{
+  "name": "EtherPesa",
+  "description": "Decentralized P2P transaction system for Etherlink",
+  "version": "1.0.0",
+  "contracts": [
+    {
+      "name": "KYCContract",
+      "path": "contracts/KYCContract.sol"
+    },
+    {
+      "name": "WalletContract", 
+      "path": "contracts/WalletContract.sol"
+    },
+    {
+      "name": "AgentServicesContract",
+      "path": "contracts/AgentServicesContract.sol"
+    },
+    {
+      "name": "TransactionManager",
+      "path": "contracts/TransactionManager.sol"
+    }
+  ],
+  "networks": {
+    "etherlink": {
+      "chainId": 128123,
+      "rpc": "https://node.ghostnet.etherlink.com"
+    }
+  }
+}

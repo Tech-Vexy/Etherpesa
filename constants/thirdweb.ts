@@ -1,5 +1,5 @@
 import { createThirdwebClient, getContract } from "thirdweb";
-import { base, baseSepolia } from "thirdweb/chains";
+import { defineChain } from "thirdweb/chains";
 
 const clientId = process.env.EXPO_PUBLIC_THIRDWEB_CLIENT_ID!;
 
@@ -13,16 +13,50 @@ export const client = createThirdwebClient({
 	clientId,
 });
 
-export const chain = base;
-
-export const contract = getContract({
-	client,
-	address: "0x82e50a6BF13A70366eDFC871f8FB8a428C43Dc03",
-	chain: baseSepolia,
+// Etherlink testnet configuration
+export const etherlink = defineChain({
+	id: 128123,
+	name: "Etherlink Testnet",
+	nativeCurrency: {
+		name: "XTZ",
+		symbol: "XTZ",
+		decimals: 18,
+	},
+	rpc: "https://node.ghostnet.etherlink.com",
+	blockExplorers: [
+		{
+			name: "Etherlink Explorer",
+			url: "https://testnet-explorer.etherlink.com",
+		},
+	],
 });
 
-export const usdcContract = getContract({
-	address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-	chain: base,
-	client,
-});
+export const chain = etherlink;
+
+// Contract addresses (update after deployment)
+export const KYC_CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_KYC_CONTRACT || "";
+export const WALLET_CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_WALLET_CONTRACT || "";
+export const AGENT_CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_AGENT_CONTRACT || "";
+export const TX_MANAGER_CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_TX_MANAGER_CONTRACT || "";
+
+// Helper function to safely create contract instances
+function createContractSafely(address: string) {
+	if (!address || address === "") {
+		return null;
+	}
+	return getContract({
+		client,
+		address,
+		chain: etherlink,
+	});
+}
+
+// Contract instances (only created if address is valid)
+export const kycContract = createContractSafely(KYC_CONTRACT_ADDRESS);
+export const walletContract = createContractSafely(WALLET_CONTRACT_ADDRESS);
+export const agentContract = createContractSafely(AGENT_CONTRACT_ADDRESS);
+export const txManagerContract = createContractSafely(TX_MANAGER_CONTRACT_ADDRESS);
+
+// Demo contracts for example screens (placeholder - replace with actual contract addresses if needed)
+export const contract = createContractSafely("0x1234567890123456789012345678901234567890"); // Placeholder
+export const usdcContract = createContractSafely("0x1234567890123456789012345678901234567890"); // Placeholder
