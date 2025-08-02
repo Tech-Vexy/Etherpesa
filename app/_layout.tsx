@@ -12,6 +12,7 @@ import { ThirdwebProvider } from "thirdweb/react";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { StatusBar } from "react-native";
 import { Colors } from "../constants/Colors";
+import { client, etherlink } from "@/constants/thirdweb";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

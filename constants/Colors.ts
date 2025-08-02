@@ -1,9 +1,9 @@
 /**
  * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * Modern color scheme inspired by fintech applications like M-Pesa.
+ * Modern color scheme inspired by M-Pesa and clean fintech applications.
  */
 
-const tintColorLight = "#DC2626"; // Red similar to M-Pesa
+const tintColorLight = "#DC2626"; // M-Pesa red
 const tintColorDark = "#EF4444";
 
 export const Colors = {
@@ -11,32 +11,36 @@ export const Colors = {
     text: "#1F2937",
     subtext: "#6B7280",
     textInverted: "#FFFFFF",
-    background: "#F9FAFB",
+    background: "#F8FAFC",
     backgroundSecondary: "#FFFFFF",
     tint: tintColorLight,
     icon: "#6B7280",
     tabIconDefault: "#9CA3AF",
     tabIconSelected: tintColorLight,
-    border: "#E5E7EB",
+    border: "#E2E8F0",
     success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
     purple: "#8B5CF6",
+    google: "#4285F4",
+    facebook: "#1877F2",
   },
   dark: {
-    text: "#F9FAFB",
-    subtext: "#9CA3AF",
+    text: "#F8FAFC",
+    subtext: "#94A3B8",
     textInverted: "#FFFFFF",
-    background: "#111827",
-    backgroundSecondary: "#1F2937",
+    background: "#0F172A",
+    backgroundSecondary: "#1E293B",
     tint: tintColorDark,
-    icon: "#9CA3AF",
-    tabIconDefault: "#6B7280",
+    icon: "#94A3B8",
+    tabIconDefault: "#64748B",
     tabIconSelected: tintColorDark,
-    border: "#374151",
+    border: "#334155",
     success: "#34D399",
     warning: "#FBBF24",
     error: "#F87171",
     purple: "#A78BFA",
+    google: "#4285F4",
+    facebook: "#1877F2",
   },
 };

@@ -11,6 +11,8 @@ if (!clientId) {
 
 export const client = createThirdwebClient({
 	clientId,
+	// Enable transaction tracking and analytics via thirdweb dashboard
+	secretKey: process.env.THIRDWEB_SECRET_KEY, // Optional: for server-side operations
 });
 
 // Etherlink testnet configuration

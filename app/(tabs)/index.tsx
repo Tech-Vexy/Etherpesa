@@ -1,29 +1,16 @@
-import { Image, StyleSheet, View, useColorScheme } from "react-native";
-
-import { ParallaxScrollView } from "@/components/ParallaxScrollView";
-import { ThemedButton } from "@/components/ThemedButton";
+import { Image, StyleSheet, View, useColorScheme, TouchableOpacity } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { chain, client } from "@/constants/thirdweb";
-import { useEffect, useState } from "react";
+import { client } from "@/constants/thirdweb";
+import { useState } from "react";
 import { createAuth } from "thirdweb/auth";
-import { baseSepolia, ethereum } from "thirdweb/chains";
-import {
-	ConnectButton,
-	ConnectEmbed,
-	lightTheme,
-	useActiveAccount,
-	useActiveWallet,
-	useConnect,
-	useDisconnect,
-} from "thirdweb/react";
-import { shortenAddress } from "thirdweb/utils";
+import { ethereum } from "thirdweb/chains";
+import { ConnectEmbed, useActiveAccount } from "thirdweb/react";
 import { createWallet } from "thirdweb/wallets";
-import {
-	getUserEmail,
-	hasStoredPasskey,
-	inAppWallet,
-} from "thirdweb/wallets/in-app";
+import { inAppWallet } from "thirdweb/wallets/in-app";
+import { baseSepolia } from "thirdweb/chains";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Colors } from "@/constants/Colors";
 
 const wallets = [
 	inAppWallet({
@@ -47,10 +34,10 @@ const wallets = [
 	createWallet("io.metamask"),
 	createWallet("com.coinbase.wallet", {
 		appMetadata: {
-			name: "Thirdweb RN Demo",
+			name: "EtherPesa",
 		},
 		mobileConfig: {
-			callbackURL: "com.thirdweb.demo://",
+			callbackURL: "com.etherpesa.app://",
 		},
 		walletConfig: {
 			options: "smartWalletOnly",
@@ -71,259 +58,155 @@ let isLoggedIn = false;
 
 export default function HomeScreen() {
 	const account = useActiveAccount();
-	const theme = useColorScheme();
+	const systemTheme = useColorScheme();
+	const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
+
+	const toggleTheme = () => {
+		setIsDarkMode(!isDarkMode);
+	};
+
+	const currentTheme = isDarkMode ? 'dark' : 'light';
+
 	return (
-		<ParallaxScrollView
-			headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-			headerImage={
-				<Image
-					source={require("@/assets/images/title.png")}
-					style={styles.reactLogo}
-				/>
-			}
-		>
-			<ThemedView style={styles.titleContainer}>
-				<ThemedText type="title">Connecting Wallets</ThemedText>
-			</ThemedView>
-			<View style={{ gap: 2 }}>
-				<ThemedText type="subtitle">{`<ConnectButton />`}</ThemedText>
-				<ThemedText type="subtext">
-					Configurable button + modal, handles both connection and connected
-					state. Example below has Smart Accounts + sponsored transactions
-					enabled.
-				</ThemedText>
+		<ThemedView style={styles.container}>
+			{/* Header with Logo and Theme Switch */}
+			<View style={styles.header}>
+				<TouchableOpacity style={styles.logoButton}>
+					<Image
+						source={require("@/assets/images/icon.png")}
+						style={styles.logo}
+					/>
+					<ThemedText style={styles.logoText}>EtherPesa</ThemedText>
+				</TouchableOpacity>
+				
+				<TouchableOpacity 
+					style={[styles.themeButton, { 
+						backgroundColor: Colors[currentTheme].backgroundSecondary,
+						borderColor: Colors[currentTheme].border,
+						borderWidth: 1,
+					}]} 
+					onPress={toggleTheme}
+				>
+					<Ionicons 
+						name={isDarkMode ? "sunny" : "moon"} 
+						size={20} 
+						color={Colors[currentTheme].text} 
+					/>
+				</TouchableOpacity>
 			</View>
-			<ConnectButton
-				client={client}
-				theme={theme || "dark"}
-				wallets={wallets}
-				chain={ethereum}
-			/>
-			<View style={{ gap: 2 }}>
-				<ThemedText type="subtitle">{`Themed <ConnectButton />`}</ThemedText>
-				<ThemedText type="subtext">
-					Styled the Connect Button to match your app.
+
+			{/* Centered Content */}
+			<View style={styles.centerContent}>
+				<ThemedText style={styles.title}>Welcome to EtherPesa</ThemedText>
+				<ThemedText style={styles.subtitle}>
+					Connect your wallet to start using our decentralized financial services
 				</ThemedText>
+
+				{/* Connect Embed Component */}
+				<View style={styles.connectContainer}>
+					<ConnectEmbed
+						client={client}
+						theme={currentTheme}
+						chain={ethereum}
+						wallets={wallets}
+						auth={{
+							async doLogin(params) {
+								// fake delay
+								await new Promise((resolve) => setTimeout(resolve, 2000));
+								const verifiedPayload = await thirdwebAuth.verifyPayload(params);
+								isLoggedIn = verifiedPayload.valid;
+							},
+							async doLogout() {
+								isLoggedIn = false;
+							},
+							async getLoginPayload(params) {
+								return thirdwebAuth.generatePayload(params);
+							},
+							async isLoggedIn(address) {
+								return isLoggedIn;
+							},
+						}}
+					/>
+				</View>
+
+				{account && (
+					<ThemedText style={styles.connectedText}>
+						🎉 Successfully connected! You can now access all features.
+					</ThemedText>
+				)}
 			</View>
-			<ConnectButton
-				client={client}
-				chain={ethereum}
-				theme={lightTheme({
-					colors: {
-						primaryButtonBg: "#1e8449",
-						modalBg: "#1e8449",
-						borderColor: "#196f3d",
-						accentButtonBg: "#196f3d",
-						primaryText: "#ffffff",
-						secondaryIconColor: "#a7b8b9",
-						secondaryText: "#a7b8b9",
-						secondaryButtonBg: "#196f3d",
-					},
-				})}
-				wallets={[
-					createWallet("io.metamask"),
-					createWallet("com.coinbase.wallet"),
-					createWallet("me.rainbow"),
-					createWallet("com.trustwallet.app"),
-					createWallet("io.zerion.wallet"),
-					createWallet("xyz.argent"),
-					createWallet("com.okex.wallet"),
-					createWallet("com.zengo"),
-				]}
-				connectButton={{
-					label: "Sign in to ✨ MyApp",
-				}}
-				connectModal={{
-					title: "✨ MyApp Login",
-				}}
-			/>
-			<View style={{ height: 16 }} />
-			<View style={{ gap: 2 }}>
-				<ThemedText type="subtitle">{`<ConnectEmbed />`}</ThemedText>
-				<ThemedText type="subtext">
-					Embeddable connection component in any screen. Example below is
-					configured with a specific list of EOAs + SIWE.
-				</ThemedText>
-			</View>
-			<ConnectEmbed
-				client={client}
-				theme={theme || "dark"}
-				chain={ethereum}
-				wallets={wallets}
-				auth={{
-					async doLogin(params) {
-						// fake delay
-						await new Promise((resolve) => setTimeout(resolve, 2000));
-						const verifiedPayload = await thirdwebAuth.verifyPayload(params);
-						isLoggedIn = verifiedPayload.valid;
-					},
-					async doLogout() {
-						isLoggedIn = false;
-					},
-					async getLoginPayload(params) {
-						return thirdwebAuth.generatePayload(params);
-					},
-					async isLoggedIn(address) {
-						return isLoggedIn;
-					},
-				}}
-			/>
-			{account && (
-				<ThemedText type="subtext">
-					ConnectEmbed does not render when connected, use the `onConnect` prop
-					to navigate to a new screen instead.
-				</ThemedText>
-			)}
-			<View style={{ height: 16 }} />
-			<View style={{ gap: 2 }}>
-				<ThemedText type="subtitle">{`useConnect()`}</ThemedText>
-				<ThemedText type="subtext">
-					Hooks to build your own UI. Example below connects to a smart Google
-					account or metamask EOA.
-				</ThemedText>
-			</View>
-			<CustomConnectUI />
-		</ParallaxScrollView>
+		</ThemedView>
 	);
 }
 
-const CustomConnectUI = () => {
-	const wallet = useActiveWallet();
-	const account = useActiveAccount();
-	const [email, setEmail] = useState<string | undefined>();
-	const { disconnect } = useDisconnect();
-	useEffect(() => {
-		if (wallet && wallet.id === "inApp") {
-			getUserEmail({ client }).then(setEmail);
-		}
-	}, [wallet]);
-
-	return wallet && account ? (
-		<View>
-			<ThemedText>Connected as {shortenAddress(account.address)}</ThemedText>
-			{email && <ThemedText type="subtext">{email}</ThemedText>}
-			<View style={{ height: 16 }} />
-			<ThemedButton onPress={() => disconnect(wallet)} title="Disconnect" />
-		</View>
-	) : (
-		<>
-			<ConnectWithGoogle />
-			<ConnectWithMetaMask />
-			<ConnectWithPasskey />
-		</>
-	);
-};
-
-const ConnectWithGoogle = () => {
-	const { connect, isConnecting } = useConnect();
-	return (
-		<ThemedButton
-			title="Connect with Google"
-			loading={isConnecting}
-			loadingTitle="Connecting..."
-			onPress={() => {
-				connect(async () => {
-					const w = inAppWallet({
-						smartAccount: {
-							chain,
-							sponsorGas: true,
-						},
-					});
-					await w.connect({
-						client,
-						strategy: "google",
-					});
-					return w;
-				});
-			}}
-		/>
-	);
-};
-
-const ConnectWithMetaMask = () => {
-	const { connect, isConnecting } = useConnect();
-	return (
-		<ThemedButton
-			title="Connect with MetaMask"
-			variant="secondary"
-			loading={isConnecting}
-			loadingTitle="Connecting..."
-			onPress={() => {
-				connect(async () => {
-					const w = createWallet("io.metamask");
-					await w.connect({
-						client,
-					});
-					return w;
-				});
-			}}
-		/>
-	);
-};
-
-const ConnectWithPasskey = () => {
-	const { connect } = useConnect();
-	return (
-		<ThemedButton
-			title="Login with Passkey"
-			onPress={() => {
-				connect(async () => {
-					const hasPasskey = await hasStoredPasskey(client);
-					const w = inAppWallet({
-						auth: {
-							options: ["passkey"],
-							passkeyDomain: "thirdweb.com",
-						},
-					});
-					await w.connect({
-						client,
-						strategy: "passkey",
-						type: hasPasskey ? "sign-in" : "sign-up",
-					});
-					return w;
-				});
-			}}
-		/>
-	);
-};
-
 const styles = StyleSheet.create({
-	titleContainer: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 8,
-	},
-	stepContainer: {
-		gap: 8,
-		marginBottom: 8,
-	},
-	reactLogo: {
-		height: "100%",
-		width: "100%",
-		bottom: 0,
-		left: 0,
-		position: "absolute",
-	},
-	rowContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 24,
-		justifyContent: "space-evenly",
-	},
-	tableContainer: {
-		width: "100%",
-	},
-	tableRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		marginBottom: 4,
-	},
-	leftColumn: {
+	container: {
 		flex: 1,
-		textAlign: "left",
+		paddingHorizontal: 20,
+		paddingTop: 60,
 	},
-	rightColumn: {
+	header: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		marginBottom: 40,
+		paddingHorizontal: 4,
+	},
+	logoButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
+	},
+	logo: {
+		width: 40,
+		height: 40,
+		borderRadius: 8,
+	},
+	logoText: {
+		fontSize: 20,
+		fontWeight: 'bold',
+	},
+	themeButton: {
+		padding: 12,
+		borderRadius: 12,
+		elevation: 2,
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.1,
+		shadowRadius: 3.84,
+	},
+	centerContent: {
 		flex: 1,
-		textAlign: "right",
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 20,
+	},
+	title: {
+		fontSize: 32,
+		fontWeight: 'bold',
+		textAlign: 'center',
+		marginBottom: 16,
+	},
+	subtitle: {
+		fontSize: 16,
+		textAlign: 'center',
+		opacity: 0.7,
+		lineHeight: 24,
+		marginBottom: 40,
+		maxWidth: 300,
+	},
+	connectContainer: {
+		width: '100%',
+		maxWidth: 400,
+		marginBottom: 20,
+	},
+	connectedText: {
+		fontSize: 14,
+		textAlign: 'center',
+		opacity: 0.8,
+		marginTop: 16,
 	},
 });

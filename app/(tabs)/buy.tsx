@@ -1,13 +1,21 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { openURL } from "expo-linking";
-import { Image, Linking, StyleSheet, View, useColorScheme } from "react-native";
-import { ParallaxScrollView } from "../../components/ParallaxScrollView";
-import { ThemedButton } from "../../components/ThemedButton";
-import { ThemedText } from "../../components/ThemedText";
-import { ThemedView } from "../../components/ThemedView";
-import { Colors } from "../../constants/Colors";
-import { client } from "../../constants/thirdweb";
-import { useThemeColor } from "../../hooks/useThemeColor";
+import React, { useState } from 'react';
+import { View, StyleSheet, Alert, ScrollView, StatusBar, TouchableOpacity, Image } from 'react-native';
+import { useActiveAccount } from 'thirdweb/react';
+import { prepareContractCall, sendTransaction } from 'thirdweb';
+import { walletContract } from '@/constants/thirdweb';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/ThemedButton';
+import { WalletConnect } from '@/components/WalletConnect';
+import { AmountInput } from '@/components/AmountInput';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Colors } from '@/constants/Colors';
+import { openTransakBuy } from '@/utils/transak';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ParallaxScrollView } from '@/components/ParallaxScrollView';
+import { openURL } from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { client } from '@/constants/thirdweb';
 
 export default function BuyScreen() {
 	return (

@@ -23,7 +23,7 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
       <View style={styles.header}>
         <View style={styles.greetingContainer}>
           <ThemedText style={[styles.greeting, { color: textColor }]}>Good Morning</ThemedText>
-          <ThemedText style={[styles.accountType, { color: textColor }]}>M-Pesa Account</ThemedText>
+          <ThemedText style={[styles.accountType, { color: textColor }]}>EtherPesa Account</ThemedText>
         </View>
         <TouchableOpacity onPress={onEyePress} style={styles.eyeButton}>
           <Ionicons 
@@ -36,7 +36,7 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
       
       <View style={styles.balanceSection}>
         <ThemedText style={[styles.balance, { color: textColor }]}>
-          {isBalanceHidden ? '***,*** MT' : `${balance} MT`}
+          {isBalanceHidden ? '***,*** MT' : `${Number(balance).toLocaleString('en-US')} MT`}
         </ThemedText>
         <TouchableOpacity style={styles.hideBalanceButton}>
           <ThemedText style={[styles.hideBalanceText, { color: textColor }]}>
@@ -47,7 +47,7 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
       
       <View style={styles.bottomSection}>
         <ThemedText style={[styles.availableBalance, { color: textColor }]}>
-          Available Bal: Ksh {isBalanceHidden ? '***,***' : balance}
+          Available Bal: Ksh {isBalanceHidden ? '***,***' : Number(balance).toLocaleString('en-US')}
         </ThemedText>
         <ThemedText style={[styles.address, { color: textColor }]}>
           Wallet: {address.slice(0, 6)}...{address.slice(-4)}

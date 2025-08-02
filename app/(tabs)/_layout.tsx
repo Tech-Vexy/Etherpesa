@@ -16,13 +16,23 @@ export default function TabLayout() {
 				tabBarStyle: {
 					backgroundColor: Colors[colorScheme ?? "light"].backgroundSecondary,
 					borderTopColor: Colors[colorScheme ?? "light"].border,
-					paddingTop: 8,
-					paddingBottom: 8,
-					height: 60,
+					borderTopWidth: 1,
+					paddingTop: 12,
+					paddingBottom: 12,
+					height: 70,
+					elevation: 8,
+					shadowColor: '#000',
+					shadowOffset: {
+						width: 0,
+						height: -2,
+					},
+					shadowOpacity: 0.1,
+					shadowRadius: 8,
 				},
 				tabBarLabelStyle: {
 					fontSize: 12,
-					fontWeight: '500',
+					fontWeight: '600',
+					marginBottom: 4,
 				},
 			}}
 		>
@@ -75,6 +85,18 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
+				name="agent"
+				options={{
+					title: "Agent",
+					tabBarIcon: ({ color, focused }) => (
+						<TabBarIcon
+							name={focused ? "business" : "business-outline"}
+							color={color}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="index"
 				options={{
 					href: null,
@@ -94,6 +116,12 @@ export default function TabLayout() {
 			/>
 			<Tabs.Screen
 				name="buy"
+				options={{
+					href: null,
+				}}
+			/>
+			<Tabs.Screen
+				name="transactions"
 				options={{
 					href: null,
 				}}

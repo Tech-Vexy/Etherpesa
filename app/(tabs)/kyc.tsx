@@ -57,26 +57,38 @@ export default function KYCScreen() {
 
     setLoading(true);
     try {
-      // Hash the phone number for privacy
+      // Hash the KYC data for privacy
       const kycHash = keccak256(toUtf8Bytes(`phone:${phoneNumber}`)) as `0x${string}`;
       
       const transaction = prepareContractCall({
         contract: kycContract,
-        method: 'function submitKYC(address, bytes32)',
+        method: 'function submitKYC(address user, bytes32 kycHash)',
         params: [account.address, kycHash],
       });
 
-      await sendTransaction({
+      const result = await sendTransaction({
         transaction,
         account,
       });
 
-      Alert.alert('Success', 'KYC submitted successfully!');
-      setPhoneNumber('');
-      await checkKYCStatus();
+      Alert.alert(
+        'KYC Submitted Successfully! ✅', 
+        `Your KYC verification has been submitted and processed.
+
+` +
+        `📊 Transaction ID: ${result.transactionHash}
+
+` +
+        `🔒 Your data is securely hashed and stored on-chain.
+` +
+        `📈 This verification is tracked in thirdweb dashboard.`
+      );
+      
+      // Refresh KYC status
+      checkKYCStatus();
     } catch (error: any) {
       console.error('KYC submission error:', error);
-      Alert.alert('Error', error.message || 'KYC submission failed');
+      Alert.alert('KYC Submission Failed', error.message || 'KYC submission failed. Please try again.');
     } finally {
       setLoading(false);
     }

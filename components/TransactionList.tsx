@@ -61,7 +61,7 @@ function TransactionItem({ type, amount, address, timestamp, isIncoming }: Trans
 }
 
 export function TransactionList({ transactions, userAddress, onViewAllPress }: TransactionListProps) {
-  const cardBackground = useThemeColor({}, 'background');
+  const cardBackground = useThemeColor({}, 'backgroundSecondary');
   const textColor = useThemeColor({}, 'text');
   const subtextColor = useThemeColor({}, 'subtext');
 
@@ -69,10 +69,11 @@ export function TransactionList({ transactions, userAddress, onViewAllPress }: T
     <ThemedView style={[styles.container, { backgroundColor: cardBackground }]}>
       <View style={styles.header}>
         <ThemedText style={[styles.sectionTitle, { color: textColor }]}>
-          M-Pesa Statements
+          Transaction Statements
         </ThemedText>
-        <TouchableOpacity onPress={onViewAllPress}>
-          <Ionicons name="chevron-forward" size={20} color={subtextColor} />
+        <TouchableOpacity onPress={onViewAllPress} style={styles.viewAllHeaderButton}>
+          <ThemedText style={[styles.viewAllHeaderText, { color: subtextColor }]}>View all</ThemedText>
+          <Ionicons name="chevron-forward" size={18} color={subtextColor} />
         </TouchableOpacity>
       </View>
       
@@ -81,6 +82,9 @@ export function TransactionList({ transactions, userAddress, onViewAllPress }: T
           <Ionicons name="receipt-outline" size={48} color={subtextColor} />
           <ThemedText style={[styles.emptyText, { color: subtextColor }]}>
             No transactions yet
+          </ThemedText>
+          <ThemedText style={[styles.emptySubtext, { color: subtextColor }]}>
+            Your recent transactions will appear here
           </ThemedText>
         </View>
       ) : (
@@ -140,6 +144,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  viewAllHeaderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewAllHeaderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 4,
+  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 32,
@@ -147,6 +160,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     marginTop: 12,
+    fontWeight: '500',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   transactionsList: {
     gap: 12,

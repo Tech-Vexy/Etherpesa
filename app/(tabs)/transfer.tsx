@@ -6,9 +6,11 @@ import { txManagerContract } from '@/constants/thirdweb';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
+import { WalletConnect } from '@/components/WalletConnect';
 import { AmountInput, QuickAmountButtons } from '@/components/AmountInput';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
+import { createTransactionMetadata, formatSuccessMessage, formatErrorMessage, TRANSACTION_CATEGORIES } from '@/utils/thirdwebTracking';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function TransferScreen() {
@@ -53,17 +55,25 @@ export default function TransferScreen() {
         params: [recipient, BigInt(amountInWei)],
       });
 
-      await sendTransaction({
+      const result = await sendTransaction({
         transaction,
         account,
       });
 
-      Alert.alert('Success', 'Transfer completed successfully!');
+      Alert.alert(
+        'Success!',
+        formatSuccessMessage(
+          "Transfer",
+          amount,
+          result.transactionHash,
+          `💸 Sent to: ${recipient.slice(0, 10)}...${recipient.slice(-4)}`
+        )
+      );
       setRecipient('');
       setAmount('');
     } catch (error: any) {
       console.error('Transfer error:', error);
-      Alert.alert('Error', error.message || 'Transfer failed');
+      Alert.alert('Transfer Failed', formatErrorMessage("Transfer", error.message));
     } finally {
       setLoading(false);
     }
@@ -80,6 +90,7 @@ export default function TransferScreen() {
             Please connect your wallet to send transfers
           </ThemedText>
         </View>
+        <WalletConnect />
       </ThemedView>
     );
   }
@@ -182,7 +193,6 @@ function InfoRow({ label, value, textColor, subtextColor }: InfoRowProps) {
       <ThemedText style={[styles.infoValue, { color: textColor }]}>{value}</ThemedText>
     </View>
   );
-}
 }
 
 const styles = StyleSheet.create({
