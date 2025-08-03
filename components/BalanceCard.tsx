@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { 
+  fetchCryptoPrices, 
+  convertToUSD, 
+  formatUSDValue, 
+  CryptoPrices 
+} from '@/utils/priceConversion';
 
 interface BalanceCardProps {
   balance: string;
@@ -17,6 +23,32 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
   const backgroundColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'textInverted');
   const iconColor = useThemeColor({}, 'textInverted');
+
+  // Price state for automatic USD conversion
+  const [prices, setPrices] = useState<CryptoPrices | null>(null);
+  const [pricesLoading, setPricesLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPrices = async () => {
+      try {
+        const currentPrices = await fetchCryptoPrices();
+        setPrices(currentPrices);
+      } catch (error) {
+        console.error('Failed to fetch prices:', error);
+      } finally {
+        setPricesLoading(false);
+      }
+    };
+
+    loadPrices();
+    
+    // Update prices every 30 seconds
+    const interval = setInterval(loadPrices, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate USD value for USDC balance
+  const usdValue = prices ? convertToUSD(balance, 'USDC', prices) : 0;
 
   return (
     <ThemedView style={[styles.card, { backgroundColor }]}>
@@ -38,6 +70,15 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
         <ThemedText style={[styles.balance, { color: textColor }]}>
           {isBalanceHidden ? '***,*** MT' : `${Number(balance).toLocaleString('en-US')} MT`}
         </ThemedText>
+        
+        {/* USD Value Display */}
+        <ThemedText style={[styles.usdValue, { color: textColor }]}>
+          {isBalanceHidden ? '***.**' : 
+            pricesLoading ? 'Loading...' : 
+            formatUSDValue(usdValue)
+          }
+        </ThemedText>
+        
         <TouchableOpacity style={styles.hideBalanceButton}>
           <ThemedText style={[styles.hideBalanceText, { color: textColor }]}>
             ⚡ Hide balance
@@ -47,7 +88,10 @@ export function BalanceCard({ balance, address, onEyePress, isBalanceHidden = fa
       
       <View style={styles.bottomSection}>
         <ThemedText style={[styles.availableBalance, { color: textColor }]}>
-          Available Bal: Ksh {isBalanceHidden ? '***,***' : Number(balance).toLocaleString('en-US')}
+          Available Bal: {isBalanceHidden ? '***,***' : 
+            pricesLoading ? 'Calculating...' : 
+            formatUSDValue(usdValue)
+          }
         </ThemedText>
         <ThemedText style={[styles.address, { color: textColor }]}>
           Wallet: {address.slice(0, 6)}...{address.slice(-4)}
@@ -106,6 +150,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     letterSpacing: -1,
+  },
+  usdValue: {
+    fontSize: 16,
+    opacity: 0.8,
+    marginBottom: 12,
+    fontWeight: '500',
   },
   hideBalanceButton: {
     alignSelf: 'flex-start',

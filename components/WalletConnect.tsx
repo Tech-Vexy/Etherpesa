@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, TextInput, Modal } from 'react-native';
 import { useConnect, useActiveAccount, useDisconnect, useActiveWallet } from 'thirdweb/react';
 import { createWallet, inAppWallet } from 'thirdweb/wallets';
+import type { WalletId } from 'thirdweb/wallets';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
@@ -109,6 +110,33 @@ export function WalletConnect({ onConnect, onDisconnect }: WalletConnectProps) {
       setIsConnecting(false);
     }
   };
+
+  const handleExternalWalletConnect = async (walletId: WalletId) => {
+    setIsConnecting(true);
+    try {
+      const wallet = createWallet(walletId);
+      
+      const result = await connect(async () => {
+        await wallet.connect({ client, chain });
+        return wallet;
+      });
+
+      onConnect?.();
+      
+      // Navigate to home page immediately after successful connection
+      router.replace('/home');
+      
+      Alert.alert(
+        'Success', 
+        `External wallet connected successfully! 🎉\n\n📊 Your transaction history will be tracked and you can view both your external wallet balance and EtherPesa balance.`
+      );
+    } catch (error: any) {
+      console.error('External wallet connection error:', error);
+      Alert.alert('Connection Failed', error.message || 'Failed to connect external wallet');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
   const handleDisconnect = async () => {
   try {
     if (!activeWallet) {
@@ -189,6 +217,22 @@ export function WalletConnect({ onConnect, onDisconnect }: WalletConnectProps) {
           <ThemedButton
             title="📘 Connect with Facebook"
             onPress={() => handleConnect('facebook')}
+            loading={isConnecting}
+          />
+          
+          {/* External Wallet Options */}
+          <ThemedText style={[styles.sectionTitle, { color: textColor }]}>
+            Or connect an external wallet:
+          </ThemedText>
+          
+          <ThemedButton
+            title="🦊 Connect MetaMask"
+            onPress={() => handleExternalWalletConnect("io.metamask")}
+            loading={isConnecting}
+          />
+          <ThemedButton
+            title="🔵 Connect Coinbase Wallet"
+            onPress={() => handleExternalWalletConnect("com.coinbase.wallet")}
             loading={isConnecting}
           />
         </View>
@@ -320,6 +364,14 @@ export function WalletConnect({ onConnect, onDisconnect }: WalletConnectProps) {
   buttonContainer: {
     gap: 12,
     marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+    opacity: 0.8,
   },
   connectButton: {
     marginVertical: 4,

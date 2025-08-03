@@ -1,6 +1,7 @@
 {
 	"cli": {
-		"version": ">= 9.1.0"
+		"version": ">= 9.1.0",
+		"appVersionSource": "remote"
 	},
 	"build": {
 		"local": {
@@ -13,12 +14,22 @@
 		},
 		"development": {
 			"developmentClient": true,
-			"distribution": "internal"
+			"distribution": "internal",
+			"env": {
+				"EAS_BUILD_PROFILE": "development"
+			}
 		},
 		"preview": {
-			"distribution": "internal"
+			"distribution": "internal",
+			"env": {
+				"EAS_BUILD_PROFILE": "preview"
+			}
 		},
-		"production": {}
+		"production": {
+			"env": {
+				"EAS_BUILD_PROFILE": "production"
+			}
+		}
 	},
 	"submit": {
 		"production": {}

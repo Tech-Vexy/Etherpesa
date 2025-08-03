@@ -6,10 +6,12 @@ import { walletContract, txManagerContract, agentContract, kycContract, client, 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { BalanceCard } from '@/components/BalanceCard';
+import { EnhancedBalanceCard } from '@/components/EnhancedBalanceCard';
 import { QuickActions } from '@/components/QuickActions';
 import { TransactionList } from '@/components/TransactionList';
 import { ThirdwebDashboardInfo } from '@/components/ThirdwebDashboardInfo';
 import { EnhancedSecurityCard } from '@/components/EnhancedSecurityCard';
+import { fetchExternalWalletBalance, isExternalWallet, getWalletDisplayName, ExternalWalletBalances } from '@/utils/externalWallet';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -76,6 +78,8 @@ export default function HomeScreen() {
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [isAgent, setIsAgent] = useState(false);
   const [isKycVerified, setIsKycVerified] = useState(false);
+  const [externalWalletBalance, setExternalWalletBalance] = useState<ExternalWalletBalances | null>(null);
+  const [isExternalWalletConnected, setIsExternalWalletConnected] = useState(false);
   const [userAssets, setUserAssets] = useState({
     usdc: '0',
     nativeBalance: '0',
@@ -104,6 +108,33 @@ export default function HomeScreen() {
       }));
     } catch (error) {
       console.error('Error fetching balance:', error);
+    }
+  };
+
+  const fetchExternalBalance = async () => {
+    if (!account || !activeWallet) return;
+    
+    try {
+      // Check if the current wallet is an external wallet
+      const walletId = activeWallet.id;
+      const isExternal = isExternalWallet(walletId);
+      setIsExternalWalletConnected(isExternal);
+      
+      if (isExternal) {
+        const externalBalance = await fetchExternalWalletBalance(account.address, walletId);
+        setExternalWalletBalance(externalBalance);
+        
+        // Update native balance in assets
+        setUserAssets(prev => ({
+          ...prev,
+          nativeBalance: externalBalance.native
+        }));
+      } else {
+        setExternalWalletBalance(null);
+      }
+    } catch (error) {
+      console.error('Error fetching external wallet balance:', error);
+      setExternalWalletBalance(null);
     }
   };
 
@@ -166,7 +197,13 @@ export default function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchBalance(), fetchTransactions(), checkAgentStatus(), checkKycStatus()]);
+    await Promise.all([
+      fetchBalance(), 
+      fetchExternalBalance(), 
+      fetchTransactions(), 
+      checkAgentStatus(), 
+      checkKycStatus()
+    ]);
     setRefreshing(false);
   };
 
@@ -192,11 +229,12 @@ export default function HomeScreen() {
   useEffect(() => {
     if (account) {
       fetchBalance();
+      fetchExternalBalance();
       fetchTransactions();
       checkAgentStatus();
       checkKycStatus();
     }
-  }, [account]);
+  }, [account, activeWallet]);
 
   if (!account) {
     return (
@@ -347,8 +385,11 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        <BalanceCard
-          balance={balance}
+        <EnhancedBalanceCard
+          internalBalance={balance}
+          externalBalance={externalWalletBalance?.native}
+          externalSymbol={externalWalletBalance?.nativeSymbol}
+          walletType={externalWalletBalance?.walletType}
           address={account.address}
           onEyePress={() => setIsBalanceHidden(!isBalanceHidden)}
           isBalanceHidden={isBalanceHidden}
