@@ -1,11 +1,11 @@
 {
 	"expo": {
-		"name": "thirdweb playground",
-		"slug": "thirdweb-playground",
+		"name": "EtherPesa",
+		"slug": "etherpesa",
 		"version": "1.0.0",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
-		"scheme": "com.thirdweb.demo",
+		"scheme": "etherpesa",
 		"userInterfaceStyle": "automatic",
 		"splash": {
 			"image": "./assets/images/splash.png",
@@ -14,10 +14,10 @@
 		},
 		"ios": {
 			"supportsTablet": true,
-			"bundleIdentifier": "com.thirdweb.demo",
+			"bundleIdentifier": "com.etherpesa.app",
 			"associatedDomains": [
-				"webcredentials:thirdweb.com",
-				"applinks:thirdweb.com"
+				"webcredentials:etherpesa.app",
+				"applinks:etherpesa.app"
 			]
 		},
 		"android": {
@@ -25,14 +25,22 @@
 				"foregroundImage": "./assets/images/adaptive-icon.png",
 				"backgroundColor": "#ffffff"
 			},
-			"package": "com.thirdweb.demo",
+			"package": "com.etherpesa.app",
 			"intentFilters": [
 				{
 					"autoVerify": true,
 					"action": "VIEW",
 					"data": {
+						"scheme": "etherpesa"
+					},
+					"category": ["BROWSABLE", "DEFAULT"]
+				},
+				{
+					"autoVerify": true,
+					"action": "VIEW",
+					"data": {
 						"scheme": "https",
-						"host": "thirdweb.com"
+						"host": "etherpesa.app"
 					},
 					"category": ["BROWSABLE", "DEFAULT"]
 				}
@@ -75,6 +83,6 @@
 				"projectId": "f7eb54f1-9743-4b3f-acda-1c28672f40c5"
 			}
 		},
-		"owner": "thirdweb"
+		"owner": "tech-vexy"
 	}
 }

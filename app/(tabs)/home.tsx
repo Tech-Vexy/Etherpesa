@@ -1,25 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, RefreshControl, ScrollView, StatusBar, TouchableOpacity, Alert } from 'react-native';
-import { useActiveAccount, useDisconnect, useActiveWallet } from 'thirdweb/react';
+import { useActiveAccount, useDisconnect, useActiveWallet, ConnectEmbed } from 'thirdweb/react';
 import { readContract } from 'thirdweb';
-import { walletContract, txManagerContract, agentContract, kycContract } from '@/constants/thirdweb';
+import { walletContract, txManagerContract, agentContract, kycContract, client, etherlink } from '@/constants/thirdweb';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { BalanceCard } from '@/components/BalanceCard';
 import { QuickActions } from '@/components/QuickActions';
 import { TransactionList } from '@/components/TransactionList';
-import { WalletConnect } from '@/components/WalletConnect';
 import { ThirdwebDashboardInfo } from '@/components/ThirdwebDashboardInfo';
+import { EnhancedSecurityCard } from '@/components/EnhancedSecurityCard';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { createAuth } from "thirdweb/auth";
+import { createWallet } from "thirdweb/wallets";
+import { inAppWallet } from "thirdweb/wallets/in-app";
 import Ionicons from '@expo/vector-icons/Ionicons';
+
+// Wallet configuration for ConnectEmbed
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: [
+        "google",
+        "facebook",
+        "discord",
+        "telegram",
+        "email",
+        "phone",
+        "passkey",
+      ],
+      passkeyDomain: "etherpesa.app",
+    },
+    smartAccount: {
+      chain: etherlink,
+      sponsorGas: true,
+    },
+  }),
+  createWallet("io.metamask"),
+  createWallet("com.coinbase.wallet", {
+    appMetadata: {
+      name: "EtherPesa",
+    },
+    mobileConfig: {
+      callbackURL: "etherpesa://",
+    },
+    walletConfig: {
+      options: "smartWalletOnly",
+    },
+  }),
+  createWallet("me.rainbow"),
+  createWallet("com.trustwallet.app"),
+  createWallet("io.zerion.wallet"),
+];
+
+const thirdwebAuth = createAuth({
+  domain: "etherpesa.app",
+  client,
+});
+
+// Login state management
+let isLoggedIn = false;
 
 export default function HomeScreen() {
   const account = useActiveAccount();
   const activeWallet = useActiveWallet();
   const { disconnect } = useDisconnect();
   const router = useRouter();
+  const colorScheme = useColorScheme();
   const [balance, setBalance] = useState<string>('0');
   const [transactions, setTransactions] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -152,20 +202,80 @@ export default function HomeScreen() {
     return (
       <ThemedView style={[styles.container, { backgroundColor }]}>
         <StatusBar backgroundColor={Colors.light.tint} barStyle="light-content" translucent={false} />
-        <View style={styles.centerContent}>
-          <ThemedText style={styles.connectTitle}>Welcome to EtherPesa</ThemedText>
-          <ThemedText style={styles.connectSubtitle}>
-            Connect your wallet to start sending and receiving money securely
+        
+        {/* Header */}
+        <View style={styles.welcomeHeader}>
+          <ThemedText style={[styles.welcomeTitle, { color: textColor }]}>
+            Welcome to EtherPesa
+          </ThemedText>
+          <ThemedText style={[styles.welcomeSubtitle, { color: subtextColor }]}>
+            Connect your wallet to start sending and receiving money securely on Etherlink
           </ThemedText>
         </View>
-        <WalletConnect 
-          onConnect={() => {
-            fetchBalance();
-            fetchTransactions();
-            checkAgentStatus();
-            checkKycStatus();
-          }}
-        />
+
+        {/* Connect Embed */}
+        <View style={styles.connectEmbedContainer}>
+          <ConnectEmbed
+            client={client}
+            theme={colorScheme === 'dark' ? 'dark' : 'light'}
+            chain={etherlink}
+            wallets={wallets}
+            auth={{
+              async doLogin(params) {
+                // Add loading delay for better UX
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                const verifiedPayload = await thirdwebAuth.verifyPayload(params);
+                isLoggedIn = verifiedPayload.valid;
+                
+                // Auto-fetch user data after login and navigate to home
+                if (isLoggedIn) {
+                  // Immediately redirect to home page
+                  router.replace('/home');
+                  
+                  // Auto-fetch user data after navigation
+                  setTimeout(() => {
+                    fetchBalance();
+                    fetchTransactions();
+                    checkAgentStatus();
+                    checkKycStatus();
+                  }, 500);
+                }
+              },
+              async doLogout() {
+                isLoggedIn = false;
+              },
+              async getLoginPayload(params) {
+                return thirdwebAuth.generatePayload(params);
+              },
+              async isLoggedIn(address) {
+                return isLoggedIn;
+              },
+            }}
+          />
+        </View>
+
+        {/* Info Cards */}
+        <View style={styles.infoCards}>
+          <View style={[styles.infoCard, { backgroundColor: useThemeColor({}, 'backgroundSecondary') }]}>
+            <Ionicons name="shield-checkmark" size={24} color={Colors.light.success} />
+            <ThemedText style={[styles.infoCardTitle, { color: textColor }]}>
+              Secure & Decentralized
+            </ThemedText>
+            <ThemedText style={[styles.infoCardText, { color: subtextColor }]}>
+              Non-custodial wallet with smart contract security
+            </ThemedText>
+          </View>
+          
+          <View style={[styles.infoCard, { backgroundColor: useThemeColor({}, 'backgroundSecondary') }]}>
+            <Ionicons name="flash" size={24} color={Colors.light.tint} />
+            <ThemedText style={[styles.infoCardTitle, { color: textColor }]}>
+              Instant Transfers
+            </ThemedText>
+            <ThemedText style={[styles.infoCardText, { color: subtextColor }]}>
+              Send money instantly to anyone, anywhere
+            </ThemedText>
+          </View>
+        </View>
       </ThemedView>
     );
   }
@@ -242,6 +352,10 @@ export default function HomeScreen() {
           address={account.address}
           onEyePress={() => setIsBalanceHidden(!isBalanceHidden)}
           isBalanceHidden={isBalanceHidden}
+        />
+        
+        <EnhancedSecurityCard 
+          onPress={() => router.push('/security')}
         />
         
         <QuickActions
@@ -383,6 +497,64 @@ const styles = StyleSheet.create({
   },
   assetValue: {
     fontSize: 12,
+  },
+  welcomeHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 320,
+  },
+  connectEmbedContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  infoCards: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    gap: 12,
+  },
+  infoCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  infoCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  infoCardText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   centerContent: {
     flex: 1,

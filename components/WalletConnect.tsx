@@ -9,6 +9,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { client, chain } from '@/constants/thirdweb';
+import { useRouter } from 'expo-router';
 
 interface WalletConnectProps {
   onConnect?: () => void;
@@ -20,6 +21,7 @@ export function WalletConnect({ onConnect, onDisconnect }: WalletConnectProps) {
   const activeWallet = useActiveWallet();
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
+  const router = useRouter();
   const [isConnecting, setIsConnecting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [email, setEmail] = useState('');
@@ -92,6 +94,9 @@ export function WalletConnect({ onConnect, onDisconnect }: WalletConnectProps) {
       setEmail('');
       setPhoneNumber('');
       onConnect?.();
+      
+      // Navigate to home page immediately after successful connection
+      router.replace('/home');
       
       Alert.alert(
         'Success', 

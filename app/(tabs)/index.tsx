@@ -11,6 +11,7 @@ import { inAppWallet } from "thirdweb/wallets/in-app";
 import { baseSepolia } from "thirdweb/chains";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
 
 const wallets = [
 	inAppWallet({
@@ -58,6 +59,7 @@ let isLoggedIn = false;
 
 export default function HomeScreen() {
 	const account = useActiveAccount();
+	const router = useRouter();
 	const systemTheme = useColorScheme();
 	const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
 
@@ -115,6 +117,11 @@ export default function HomeScreen() {
 								await new Promise((resolve) => setTimeout(resolve, 2000));
 								const verifiedPayload = await thirdwebAuth.verifyPayload(params);
 								isLoggedIn = verifiedPayload.valid;
+								
+								// Immediately redirect to home page after successful login
+								if (isLoggedIn) {
+									router.replace('/home');
+								}
 							},
 							async doLogout() {
 								isLoggedIn = false;

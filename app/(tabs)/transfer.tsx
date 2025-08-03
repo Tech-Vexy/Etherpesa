@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { WalletConnect } from '@/components/WalletConnect';
 import { AmountInput, QuickAmountButtons } from '@/components/AmountInput';
+import { WithAuthProtection, useAuthProtection } from '@/components/WithAuthProtection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
 import { createTransactionMetadata, formatSuccessMessage, formatErrorMessage, TRANSACTION_CATEGORIES } from '@/utils/thirdwebTracking';
@@ -18,6 +19,7 @@ export default function TransferScreen() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const { withAuth, isAuthenticating } = useAuthProtection();
   
   const backgroundColor = useThemeColor({}, 'background');
   const cardBackground = useThemeColor({}, 'backgroundSecondary');
@@ -25,7 +27,7 @@ export default function TransferScreen() {
   const subtextColor = useThemeColor({}, 'subtext');
   const borderColor = useThemeColor({}, 'border');
 
-  const handleTransfer = async () => {
+  const executeTransfer = async () => {
     if (!account) {
       Alert.alert('Error', 'Please connect your wallet');
       return;
@@ -77,6 +79,10 @@ export default function TransferScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTransfer = () => {
+    withAuth(executeTransfer);
   };
 
   if (!account) {
@@ -141,9 +147,15 @@ export default function TransferScreen() {
         {/* Send Button */}
         <View style={styles.buttonContainer}>
           <ThemedButton
-            title={loading ? 'Sending...' : 'Send Transfer'}
+            title={
+              loading 
+                ? 'Sending...' 
+                : isAuthenticating 
+                ? 'Authenticating...' 
+                : 'Send Transfer'
+            }
             onPress={handleTransfer}
-            loading={loading}
+            loading={loading || isAuthenticating}
           />
         </View>
 

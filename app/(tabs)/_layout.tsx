@@ -97,6 +97,18 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
+				name="security"
+				options={{
+					title: "Security",
+					tabBarIcon: ({ color, focused }) => (
+						<TabBarIcon
+							name={focused ? "shield-checkmark" : "shield-checkmark-outline"}
+							color={color}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="index"
 				options={{
 					href: null,

@@ -50,11 +50,13 @@ function SocialSection() {
 
 function ReadSection() {
 	const nameQuery = useReadContract({
-		contract,
+		contract: contract!,
 		method: "function name() returns (string)",
+		queryOptions: { enabled: !!contract },
 	});
 	const supplyQuery = useReadContract(totalSupply, {
-		contract,
+		contract: contract!,
+		queryOptions: { enabled: !!contract },
 	});
 
 	return (
@@ -83,7 +85,7 @@ function ReadSection() {
 
 function EventsSection() {
 	const eventsQuery = useContractEvents({
-		contract: usdcContract,
+		contract: usdcContract!,
 		events: [transferEvent()],
 		blockRange: 10,
 	});

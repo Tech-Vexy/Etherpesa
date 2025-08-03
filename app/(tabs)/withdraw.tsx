@@ -11,6 +11,7 @@ import { useRegisteredAgents } from '@/hooks/useRegisteredAgents';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
 import { createTransactionMetadata, formatSuccessMessage, formatErrorMessage, TRANSACTION_CATEGORIES } from '@/utils/thirdwebTracking';
+import { openTransakSell, isTransakConfigured } from '@/utils/transak';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function WithdrawScreen() {
@@ -82,9 +83,26 @@ export default function WithdrawScreen() {
   };
 
   const openTransakWidget = () => {
+    if (!account) {
+      Alert.alert('Error', 'Please connect your wallet first');
+      return;
+    }
+
+    if (!isTransakConfigured()) {
+      Alert.alert(
+        'Transak Not Available',
+        'Transak integration is not properly configured. Please use agent withdrawal for now.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const withdrawAmount = amount ? parseFloat(amount) : undefined;
+    openTransakSell(account.address, withdrawAmount);
+    
     Alert.alert(
-      'Transak Integration',
-      'In production, this would open the Transak widget for direct fiat off-ramp. For now, use the agent withdrawal system.',
+      'Transak Withdrawal',
+      'You will be redirected to Transak to complete your withdrawal to bank account or other payment methods.',
       [{ text: 'OK' }]
     );
   };
@@ -193,33 +211,82 @@ export default function WithdrawScreen() {
             />
             
             <TouchableOpacity 
-              style={[styles.transakButton, { backgroundColor: Colors.light.purple }]}
+              style={[styles.transakButton, { 
+                backgroundColor: isTransakConfigured() ? Colors.light.purple : Colors.light.border,
+                opacity: isTransakConfigured() ? 1 : 0.6
+              }]}
               onPress={openTransakWidget}
+              disabled={!isTransakConfigured()}
             >
-              <ThemedText style={styles.transakButtonText}>
-                Direct Withdrawal (Transak)
-              </ThemedText>
+              <View style={styles.transakButtonContent}>
+                <Ionicons 
+                  name="card" 
+                  size={20} 
+                  color={isTransakConfigured() ? 'white' : Colors.light.subtext} 
+                />
+                <ThemedText style={[styles.transakButtonText, {
+                  color: isTransakConfigured() ? 'white' : Colors.light.subtext
+                }]}>
+                  Direct Withdrawal (Transak)
+                </ThemedText>
+              </View>
+              {!isTransakConfigured() && (
+                <ThemedText style={[styles.transakDisabledText, { color: Colors.light.subtext }]}>
+                  Not configured
+                </ThemedText>
+              )}
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={[styles.infoCard, { backgroundColor: cardBackground }]}>
           <ThemedText style={[styles.infoTitle, { color: textColor }]}>Withdrawal Options</ThemedText>
-          <ThemedText style={[styles.infoText, { color: textColor }]}>
-            • <ThemedText style={styles.bold}>Agent withdrawal:</ThemedText> Cash pickup at selected location
-          </ThemedText>
-          <ThemedText style={[styles.infoText, { color: textColor }]}>
-            • <ThemedText style={styles.bold}>Processing time:</ThemedText> 5-30 minutes
-          </ThemedText>
-          <ThemedText style={[styles.infoText, { color: textColor }]}>
-            • <ThemedText style={styles.bold}>Service fee:</ThemedText> Small fee may apply
-          </ThemedText>
-          <ThemedText style={[styles.infoText, { color: textColor }]}>
-            • <ThemedText style={styles.bold}>Direct withdrawal:</ThemedText> Bank transfer via Transak
-          </ThemedText>
-          <ThemedText style={[styles.infoText, { color: Colors.light.success }]}>
-            📊 <ThemedText style={styles.bold}>All transactions tracked via thirdweb dashboard</ThemedText>
-          </ThemedText>
+          
+          <View style={styles.optionSection}>
+            <View style={styles.optionHeader}>
+              <Ionicons name="business" size={20} color={Colors.light.tint} />
+              <ThemedText style={[styles.optionTitle, { color: textColor }]}>Agent Withdrawal</ThemedText>
+            </View>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Cash pickup at selected location
+            </ThemedText>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Processing time: 5-30 minutes
+            </ThemedText>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Service fee: Small fee may apply
+            </ThemedText>
+          </View>
+
+          <View style={styles.optionSection}>
+            <View style={styles.optionHeader}>
+              <Ionicons name="card" size={20} color={Colors.light.purple} />
+              <ThemedText style={[styles.optionTitle, { color: textColor }]}>Direct Withdrawal (Transak)</ThemedText>
+            </View>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Bank transfer, PayPal, or other payment methods
+            </ThemedText>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Processing time: 1-3 business days
+            </ThemedText>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Service fee: Varies by payment method
+            </ThemedText>
+            <ThemedText style={[styles.infoText, { color: textColor }]}>
+              • Available in 180+ countries
+            </ThemedText>
+            {!isTransakConfigured() && (
+              <ThemedText style={[styles.infoText, { color: Colors.light.warning }]}>
+                ⚠️ Currently not configured for your region
+              </ThemedText>
+            )}
+          </View>
+
+          <View style={styles.trackingSection}>
+            <ThemedText style={[styles.infoText, { color: Colors.light.success }]}>
+              📊 <ThemedText style={styles.bold}>All transactions tracked via thirdweb dashboard</ThemedText>
+            </ThemedText>
+          </View>
         </View>
       </ScrollView>
     </ThemedView>
@@ -353,10 +420,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  transakButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   transakButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  transakDisabledText: {
+    fontSize: 12,
+    marginTop: 4,
   },
   infoCard: {
     padding: 16,
@@ -374,6 +449,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 12,
+  },
+  optionSection: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  trackingSection: {
+    paddingTop: 8,
+    borderTopWidth: 0,
   },
   infoText: {
     fontSize: 14,

@@ -45,20 +45,21 @@ function WriteSection() {
 	const account = useActiveAccount();
 	const sendMutation = useSendAndConfirmTransaction();
 	const balanceQuery = useReadContract(balanceOf, {
-		contract,
+		contract: contract!,
 		owner: account?.address!,
-		queryOptions: { enabled: !!account },
+		queryOptions: { enabled: !!account && !!contract },
 	});
 	const nftQuery = useReadContract(getNFT, {
-		contract,
+		contract: contract!,
 		tokenId: 1n,
+		queryOptions: { enabled: !!contract },
 	});
 
 	const mint = async () => {
-		if (!account) return;
+		if (!account || !contract) return;
 		sendMutation.mutate(
 			claimTo({
-				contract,
+				contract: contract,
 				quantity: 1n,
 				to: account.address,
 			}),
