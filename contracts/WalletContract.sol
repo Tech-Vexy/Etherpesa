@@ -9,6 +9,7 @@ import "./interfaces/IKYC.sol";
  */
 contract WalletContract {
     IKYC public kycContract;
+    address public txManager; // Transaction manager contract address
     
     // User balances in USDC (6 decimals)
     mapping(address => uint256) public balances;
@@ -22,8 +23,27 @@ contract WalletContract {
         _;
     }
     
+    modifier onlyKYCOrTxManager(address user) {
+        require(
+            (msg.sender == user && kycContract.verifyUser(user)) || 
+            msg.sender == txManager,
+            "KYC required or unauthorized"
+        );
+        _;
+    }
+    
     constructor(address _kycContract) {
         kycContract = IKYC(_kycContract);
+    }
+    
+    /**
+     * @dev Set the transaction manager address (only once during deployment)
+     * @param _txManager Transaction manager contract address
+     */
+    function setTxManager(address _txManager) external {
+        require(txManager == address(0), "TxManager already set");
+        require(_txManager != address(0), "Invalid address");
+        txManager = _txManager;
     }
     
     /**
@@ -38,9 +58,28 @@ contract WalletContract {
     }
     
     /**
-     * @dev P2P transfer between users
+     * @dev P2P transfer between users (can be called by user or tx manager)
+     * @param sender Sender address
+     * @param recipient Recipient address  
+     * @param amount Amount to transfer in USD (6 decimals)
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) external onlyKYCOrTxManager(sender) {
+        require(recipient != address(0), "Invalid recipient");
+        require(amount > 0, "Invalid amount");
+        require(balances[sender] >= amount, "Insufficient balance");
+        require(kycContract.verifyUser(sender), "Sender not KYC verified");
+        require(kycContract.verifyUser(recipient), "Recipient not KYC verified");
+        
+        balances[sender] -= amount;
+        balances[recipient] += amount;
+        
+        emit Transfer(sender, recipient, amount);
+    }
+
+    /**
+     * @dev P2P transfer between users (direct user call)
      * @param recipient Recipient address
-     * @param amount Amount to transfer
+     * @param amount Amount to transfer in USD (6 decimals)
      */
     function transfer(address recipient, uint256 amount) external onlyKYC {
         require(recipient != address(0), "Invalid recipient");

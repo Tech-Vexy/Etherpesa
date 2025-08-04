@@ -46,14 +46,19 @@ contract TransactionManager {
     /**
      * @dev Execute P2P transfer with logging
      * @param recipient Recipient address
-     * @param amount Amount to transfer
+     * @param amount Amount to transfer in USD (6 decimals)
      */
     function executeP2PTransfer(address recipient, uint256 amount) external {
         require(kycContract.verifyUser(msg.sender), "Sender not KYC verified");
         require(kycContract.verifyUser(recipient), "Recipient not KYC verified");
+        require(recipient != address(0), "Invalid recipient");
+        require(amount > 0, "Invalid amount");
         
-        // Execute transfer through wallet contract
-        walletContract.transfer(recipient, amount);
+        // Check sender has sufficient balance
+        require(walletContract.getBalance(msg.sender) >= amount, "Insufficient balance");
+        
+        // Execute transfer through wallet contract using transferFrom
+        walletContract.transferFrom(msg.sender, recipient, amount);
         
         // Log transaction
         logTransaction(msg.sender, recipient, amount, "P2P_TRANSFER");

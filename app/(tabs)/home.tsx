@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { BalanceCard } from '@/components/BalanceCard';
 import { EnhancedBalanceCard } from '@/components/EnhancedBalanceCard';
+import { USDPortfolioSummary } from '@/components/USDPortfolioSummary';
 import { QuickActions } from '@/components/QuickActions';
 import { TransactionList } from '@/components/TransactionList';
 import { ThirdwebDashboardInfo } from '@/components/ThirdwebDashboardInfo';
@@ -393,6 +394,16 @@ export default function HomeScreen() {
           address={account.address}
           onEyePress={() => setIsBalanceHidden(!isBalanceHidden)}
           isBalanceHidden={isBalanceHidden}
+        />
+        
+        <USDPortfolioSummary
+          walletAddress={account.address}
+          internalBalance={balance}
+          externalBalance={externalWalletBalance?.native}
+          externalSymbol={externalWalletBalance?.nativeSymbol}
+          walletType={externalWalletBalance?.walletType}
+          onPress={() => router.push('/read')}
+          refreshTrigger={refreshing ? 1 : 0}
         />
         
         <EnhancedSecurityCard 

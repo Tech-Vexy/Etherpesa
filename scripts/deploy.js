@@ -47,6 +47,12 @@ async function main() {
   await txManager.waitForDeployment();
   console.log("Transaction Manager deployed to:", await txManager.getAddress());
 
+  // Set Transaction Manager in Wallet Contract
+  console.log("\n5. Setting Transaction Manager in Wallet Contract...");
+  const setTxManagerTx = await walletContract.setTxManager(await txManager.getAddress());
+  await setTxManagerTx.wait();
+  console.log("Transaction Manager set in Wallet Contract");
+
   // Save deployment addresses
   const deploymentInfo = {
     network: "etherlink",

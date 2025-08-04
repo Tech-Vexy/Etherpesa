@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView, StatusBar, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useActiveAccount } from 'thirdweb/react';
-import { prepareContractCall, sendTransaction } from 'thirdweb';
-import { walletContract } from '@/constants/thirdweb';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -18,6 +16,8 @@ import {
   getMinTransactionAmount,
   getAvailableCryptocurrencies 
 } from '@/utils/transak';
+import { executeUSDDeposit, getUserUSDBalance } from '@/utils/enhancedUSDTransactions';
+import { formatUSDValue } from '@/utils/priceConversion';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 type SupportedCrypto = keyof typeof SUPPORTED_CRYPTOCURRENCIES;
@@ -27,6 +27,8 @@ export default function BuyScreen() {
   const [amount, setAmount] = useState('');
   const [selectedCrypto, setSelectedCrypto] = useState<SupportedCrypto>('USDC');
   const [loading, setLoading] = useState(false);
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [balanceLoading, setBalanceLoading] = useState(false);
   
   const backgroundColor = useThemeColor({}, 'background');
   const cardBackground = useThemeColor({}, 'backgroundSecondary');
@@ -34,6 +36,27 @@ export default function BuyScreen() {
   const subtextColor = useThemeColor({}, 'subtext');
 
   const availableCryptos = getAvailableCryptocurrencies();
+
+  // Load user balance when account changes
+  useEffect(() => {
+    if (account) {
+      loadUserBalance();
+    }
+  }, [account]);
+
+  const loadUserBalance = async () => {
+    if (!account) return;
+    
+    setBalanceLoading(true);
+    try {
+      const balance = await getUserUSDBalance(account.address);
+      setUserBalance(balance);
+    } catch (error) {
+      console.error('Error loading balance:', error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
 
   const handleTransakBuy = () => {
     if (!account) {
@@ -72,7 +95,7 @@ export default function BuyScreen() {
     openTransakOptimized(account.address, buyAmount, selectedCrypto);
   };
 
-  const handleDemoDeposit = async () => {
+    const handleDemoDeposit = async () => {
     if (!account) {
       Alert.alert('Error', 'Please connect your wallet first');
       return;
@@ -83,28 +106,32 @@ export default function BuyScreen() {
       return;
     }
 
-    // Convert amount based on token decimals
-    const cryptoInfo = SUPPORTED_CRYPTOCURRENCIES[selectedCrypto];
-    const amountInWei = Math.floor(parseFloat(amount) * Math.pow(10, cryptoInfo.decimals));
+    const amountUSD = parseFloat(amount);
 
     setLoading(true);
     try {
-      const transaction = prepareContractCall({
-        contract: walletContract!,
-        method: 'function deposit(uint256 amount)',
-        params: [BigInt(amountInWei)],
-      });
+      const result = await executeUSDDeposit(account, amountUSD, true); // Enable gasless transactions
 
-      const result = await sendTransaction({
-        transaction,
-        account,
-      });
+      if (result.success) {
+        Alert.alert(
+          'Demo Deposit Successful! 🎉',
+          `Successfully deposited ${formatUSDValue(amountUSD)} to your EtherPesa wallet.
 
-      Alert.alert(
-        'Demo Deposit Successful!',
-        `Deposited $${amount} worth of ${selectedCrypto} to your wallet.\n\nTransaction: ${result.transactionHash}\n\nNote: This is a demo deposit. In production, use Transak for real purchases.`
-      );
-      setAmount('');
+` +
+          `💰 Amount: ${formatUSDValue(amountUSD)}
+` +
+          `⛽ Gas Cost: Free (Account Abstraction)
+` +
+          `🔗 Transaction Hash: ${result.transactionHash?.slice(0, 10)}...
+
+` +
+          `� Note: This is a demo deposit. For real purchases, use the Transak integration above.`,
+          [{ text: 'OK' }]
+        );
+        setAmount('');
+      } else {
+        Alert.alert('Demo Deposit Failed', result.error || 'Unknown error occurred');
+      }
     } catch (error: any) {
       console.error('Demo deposit error:', error);
       Alert.alert('Demo Deposit Failed', error.message || 'Failed to deposit funds');

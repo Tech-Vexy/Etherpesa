@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, TextInput, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useActiveAccount } from 'thirdweb/react';
-import { prepareContractCall, sendTransaction } from 'thirdweb';
-import { walletContract, agentContract, txManagerContract } from '@/constants/thirdweb';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -10,8 +8,9 @@ import { WalletConnect } from '@/components/WalletConnect';
 import { useRegisteredAgents } from '@/hooks/useRegisteredAgents';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
-import { createTransactionMetadata, formatSuccessMessage, formatErrorMessage, TRANSACTION_CATEGORIES } from '@/utils/thirdwebTracking';
 import { openTransakSell, isTransakConfigured } from '@/utils/transak';
+import { executeUSDWithdrawalToAgent, getUserUSDBalance } from '@/utils/enhancedUSDTransactions';
+import { formatUSDValue } from '@/utils/priceConversion';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function WithdrawScreen() {
@@ -19,20 +18,34 @@ export default function WithdrawScreen() {
   const [amount, setAmount] = useState('');
   const [selectedAgent, setSelectedAgent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userBalance, setUserBalance] = useState(0);
   const { agents, loading: agentsLoading, error: agentsError, refetch } = useRegisteredAgents();
   
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const cardBackground = useThemeColor({}, 'backgroundSecondary');
 
+  // Load user balance on component mount and account change
+  useEffect(() => {
+    if (account) {
+      loadUserBalance();
+    }
+  }, [account]);
+
+  const loadUserBalance = async () => {
+    if (!account) return;
+    
+    try {
+      const balance = await getUserUSDBalance(account.address);
+      setUserBalance(balance);
+    } catch (error) {
+      console.error('Error loading user balance:', error);
+    }
+  };
+
   const handleWithdrawal = async () => {
     if (!account) {
       Alert.alert('Error', 'Please connect your wallet');
-      return;
-    }
-
-    if (!txManagerContract) {
-      Alert.alert('Error', 'Transaction manager contract not loaded. Please check your configuration.');
       return;
     }
 
@@ -41,42 +54,60 @@ export default function WithdrawScreen() {
       return;
     }
 
-    const amountInWei = Math.floor(parseFloat(amount) * 1000000); // Convert to 6 decimals
-    if (amountInWei <= 0) {
+    const withdrawalAmount = parseFloat(amount);
+    if (withdrawalAmount <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+
+    if (withdrawalAmount > userBalance) {
+      Alert.alert('Insufficient Balance', `You only have ${formatUSDValue(userBalance)} available for withdrawal.`);
       return;
     }
 
     setLoading(true);
     try {
-      // Use transaction manager to process withdrawal with tracking
-      const transaction = prepareContractCall({
-        contract: txManagerContract,
-        method: 'function executeWithdrawal(uint256 amount, address agent)',
-        params: [BigInt(amountInWei), selectedAgent],
-      });
-
       const selectedAgentInfo = agents.find(agent => agent.address === selectedAgent);
-      const result = await sendTransaction({
-        transaction,
+      
+      // Use the enhanced USD withdrawal system with agent support
+      const result = await executeUSDWithdrawalToAgent(
         account,
-      });
+        withdrawalAmount,
+        selectedAgent,
+        selectedAgentInfo?.name,
+        true // Enable gasless transactions
+      );
 
       Alert.alert(
-        'Success!',
-        formatSuccessMessage(
-          "Withdrawal",
-          amount,
-          result.transactionHash,
-          `🏪 Agent: ${selectedAgentInfo?.name || 'Selected Agent'}\n� Processing through local agent network`
-        )
+        'Withdrawal Successful! 🎉',
+        `Amount: ${formatUSDValue(withdrawalAmount)}\n` +
+        `Agent: ${selectedAgentInfo?.name || 'Selected Agent'}\n` +
+        `Transaction Hash: ${result.transactionHash}\n\n` +
+        '💵 You can now collect your cash from the selected agent location.',
+        [{ text: 'OK' }]
       );
       
+      // Clear form and reload balance
       setAmount('');
       setSelectedAgent('');
+      await loadUserBalance();
+      
     } catch (error: any) {
       console.error('Withdrawal error:', error);
-      Alert.alert('Withdrawal Failed', formatErrorMessage("Withdrawal", error.message));
+      
+      let errorMessage = 'An unexpected error occurred during withdrawal.';
+      
+      if (error.message?.includes('KYC')) {
+        errorMessage = 'KYC verification required. Please complete your KYC verification before making withdrawals.';
+      } else if (error.message?.includes('insufficient')) {
+        errorMessage = 'Insufficient balance for this withdrawal amount.';
+      } else if (error.message?.includes('agent')) {
+        errorMessage = 'Invalid agent selected. Please choose a different agent.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Withdrawal Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -133,7 +164,12 @@ export default function WithdrawScreen() {
         
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <ThemedText style={[styles.label, { color: textColor }]}>Amount (USDC)</ThemedText>
+            <View style={styles.labelRow}>
+              <ThemedText style={[styles.label, { color: textColor }]}>Amount (USD)</ThemedText>
+              <ThemedText style={[styles.balanceText, { color: Colors.light.tint }]}>
+                Available: {formatUSDValue(userBalance)}
+              </ThemedText>
+            </View>
             <TextInput
               style={[styles.input, { color: textColor, borderColor: Colors.light.border }]}
               value={amount}
@@ -324,10 +360,19 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 20,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+  },
+  balanceText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,
