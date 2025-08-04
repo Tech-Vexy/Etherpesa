@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, TextInput, StatusBar, ScrollView } from 'react-native';
 import { useActiveAccount } from 'thirdweb/react';
-import { prepareContractCall, sendTransaction } from 'thirdweb';
-import { txManagerContract } from '@/constants/thirdweb';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -11,7 +9,8 @@ import { AmountInput, QuickAmountButtons } from '@/components/AmountInput';
 import { WithAuthProtection, useAuthProtection } from '@/components/WithAuthProtection';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors } from '@/constants/Colors';
-import { createTransactionMetadata, formatSuccessMessage, formatErrorMessage, TRANSACTION_CATEGORIES } from '@/utils/thirdwebTracking';
+import { executeUSDTransfer, getUserUSDBalance, estimateTransactionCost, validateAddress, checkKYCStatus } from '@/utils/enhancedUSDTransactions';
+import { formatUSDValue } from '@/utils/priceConversion';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function TransferScreen() {
@@ -19,6 +18,8 @@ export default function TransferScreen() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [balanceLoading, setBalanceLoading] = useState(false);
   const { withAuth, isAuthenticating } = useAuthProtection();
   
   const backgroundColor = useThemeColor({}, 'background');
@@ -27,14 +28,30 @@ export default function TransferScreen() {
   const subtextColor = useThemeColor({}, 'subtext');
   const borderColor = useThemeColor({}, 'border');
 
+  // Load user balance when account changes
+  useEffect(() => {
+    if (account) {
+      loadUserBalance();
+    }
+  }, [account]);
+
+  const loadUserBalance = async () => {
+    if (!account) return;
+    
+    setBalanceLoading(true);
+    try {
+      const balance = await getUserUSDBalance(account.address);
+      setUserBalance(balance);
+    } catch (error) {
+      console.error('Error loading balance:', error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
   const executeTransfer = async () => {
     if (!account) {
       Alert.alert('Error', 'Please connect your wallet');
-      return;
-    }
-
-    if (!txManagerContract) {
-      Alert.alert('Error', 'Transaction manager contract not loaded. Please check your configuration.');
       return;
     }
 
@@ -43,39 +60,72 @@ export default function TransferScreen() {
       return;
     }
 
-    const amountInWei = Math.floor(parseFloat(amount) * 1000000); // Convert to 6 decimals
-    if (amountInWei <= 0) {
+    // Validate recipient address format
+    if (!validateAddress(recipient)) {
+      Alert.alert('Invalid Address', 'Please enter a valid Ethereum address');
+      return;
+    }
+
+    const amountUSD = parseFloat(amount);
+    if (amountUSD <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+
+    if (amountUSD > userBalance) {
+      Alert.alert(
+        'Insufficient Balance', 
+        `You have ${formatUSDValue(userBalance)} but need ${formatUSDValue(amountUSD)}`
+      );
+      return;
+    }
+
+    // Check KYC status before proceeding
+    const isKYCVerified = await checkKYCStatus(account.address);
+    if (!isKYCVerified) {
+      Alert.alert(
+        'KYC Verification Required',
+        'You need to complete KYC verification before making transfers. Please visit the KYC tab to verify your account.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Go to KYC', onPress: () => {
+            // Would navigate to KYC tab
+            console.log('Navigate to KYC tab');
+          }}
+        ]
+      );
       return;
     }
 
     setLoading(true);
     try {
-      const transaction = prepareContractCall({
-        contract: txManagerContract,
-        method: 'function executeP2PTransfer(address to, uint256 amount)',
-        params: [recipient, BigInt(amountInWei)],
-      });
-
-      const result = await sendTransaction({
-        transaction,
-        account,
-      });
-
-      Alert.alert(
-        'Success!',
-        formatSuccessMessage(
-          "Transfer",
-          amount,
-          result.transactionHash,
-          `💸 Sent to: ${recipient.slice(0, 10)}...${recipient.slice(-4)}`
-        )
+      const result = await executeUSDTransfer(
+        account.address, // fromAddress
+        recipient, // toAddress
+        amountUSD, // amountUSD
+        account // account
       );
-      setRecipient('');
-      setAmount('');
+
+      if (result.success) {
+        Alert.alert(
+          'Transfer Successful! 🎉',
+          `Successfully sent ${formatUSDValue(amountUSD)} to ${recipient.slice(0, 6)}...${recipient.slice(-4)}\n\n` +
+          `💰 Amount: ${formatUSDValue(amountUSD)}\n` +
+          `⛽ Gas Cost: Free (Account Abstraction)\n` +
+          `🔗 Transaction Hash: ${result.transactionHash?.slice(0, 10)}...\n\n` +
+          `✨ Your transaction was processed instantly with zero gas fees using Account Abstraction!`,
+          [{ text: 'OK', onPress: () => {
+            setRecipient('');
+            setAmount('');
+            loadUserBalance(); // Refresh balance
+          }}]
+        );
+      } else {
+        Alert.alert('Transfer Failed', result.error || 'Unknown error occurred');
+      }
     } catch (error: any) {
       console.error('Transfer error:', error);
-      Alert.alert('Transfer Failed', formatErrorMessage("Transfer", error.message));
+      Alert.alert('Transfer Failed', error.message || 'Transfer failed');
     } finally {
       setLoading(false);
     }
@@ -109,17 +159,34 @@ export default function TransferScreen() {
         <View style={styles.header}>
           <ThemedText style={[styles.title, { color: textColor }]}>Send Money</ThemedText>
           <ThemedText style={[styles.subtitle, { color: subtextColor }]}>
-            Transfer USDC to any wallet address
+            Transfer USD directly to any wallet address
+          </ThemedText>
+        </View>
+
+        {/* Balance Display */}
+        <View style={[styles.balanceCard, { backgroundColor: cardBackground, borderColor }]}>
+          <View style={styles.balanceHeader}>
+            <Ionicons name="wallet" size={20} color={textColor} />
+            <ThemedText style={[styles.balanceLabel, { color: textColor }]}>
+              Available Balance
+            </ThemedText>
+          </View>
+          <ThemedText style={[styles.balanceAmount, { color: textColor }]}>
+            {balanceLoading ? 'Loading...' : formatUSDValue(userBalance)}
+          </ThemedText>
+          <ThemedText style={[styles.balanceSubtext, { color: subtextColor }]}>
+            Gasless transactions with Account Abstraction
           </ThemedText>
         </View>
 
         {/* Amount Input */}
         <View style={[styles.section, { backgroundColor: cardBackground }]}>
-          <ThemedText style={[styles.sectionTitle, { color: textColor }]}>Amount</ThemedText>
+          <ThemedText style={[styles.sectionTitle, { color: textColor }]}>Amount (USD)</ThemedText>
           <AmountInput
             value={amount}
             onChangeText={setAmount}
             placeholder="0.00"
+            currency="USD"
           />
           <QuickAmountButtons
             amounts={[5, 10, 25, 50, 100]}
@@ -323,5 +390,40 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  balanceCard: {
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  balanceLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    letterSpacing: -1,
+  },
+  balanceSubtext: {
+    fontSize: 14,
+    opacity: 0.7,
   },
 });

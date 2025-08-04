@@ -41,8 +41,8 @@
       ]
     },
     "C:\\Users\\VeldrineKaharwa\\etherpesa\\contracts\\WalletContract.sol": {
-      "lastModificationDate": 1753879081374,
-      "contentHash": "d9c8201db7f0a63833ebce48b1aa5f78",
+      "lastModificationDate": 1754311343808,
+      "contentHash": "f3296e9a6658c34840ef6eae19782132",
       "sourceName": "contracts/WalletContract.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -115,8 +115,8 @@
       ]
     },
     "C:\\Users\\VeldrineKaharwa\\etherpesa\\contracts\\TransactionManager.sol": {
-      "lastModificationDate": 1753879115154,
-      "contentHash": "7f3f5d066327b83dddaf4a998e32bbf7",
+      "lastModificationDate": 1754311161227,
+      "contentHash": "1805c26f44ac307d465fdf20bfaee8c6",
       "sourceName": "contracts/TransactionManager.sol",
       "solcConfig": {
         "version": "0.8.28",

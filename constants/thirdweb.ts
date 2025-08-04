@@ -1,5 +1,6 @@
 import { createThirdwebClient, getContract } from "thirdweb";
 import { defineChain } from "thirdweb/chains";
+import { smartWallet, inAppWallet } from "thirdweb/wallets";
 
 const clientId = process.env.EXPO_PUBLIC_THIRDWEB_CLIENT_ID!;
 
@@ -34,6 +35,13 @@ export const etherlink = defineChain({
 });
 
 export const chain = etherlink;
+
+// Smart Wallet configuration for Account Abstraction
+export const smartWalletConfig = smartWallet({
+	chain: etherlink,
+	factoryAddress: "0x4651fF0d8E8b5f7fcB55B3Ff8FF1ce4d5fd5a6B1", // Thirdweb's factory address
+	gasless: true, // Enable gasless transactions
+});
 
 // Contract addresses (update after deployment)
 export const KYC_CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_KYC_CONTRACT || "";
