@@ -77,9 +77,6 @@ importers:
       expo-web-browser:
         specifier: ~14.1.6
         version: 14.1.6(expo@53.0.9(@babel/core@7.28.0)(@expo/metro-runtime@5.0.4(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1)))(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1))(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))
-      http:
-        specifier: 0.0.1-security
-        version: 0.0.1-security
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -116,15 +113,15 @@ importers:
       react-native-screens:
         specifier: 4.10.0
         version: 4.10.0(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1)
+      react-native-stream:
+        specifier: ^0.1.9
+        version: 0.1.9
       react-native-svg:
         specifier: 15.11.2
         version: 15.11.2(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1)
       react-native-web:
         specifier: 0.20.0
         version: 0.20.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      stream:
-        specifier: ^0.0.3
-        version: 0.0.3
       stream-browserify:
         specifier: ^3.0.0
         version: 3.0.0
@@ -3930,10 +3927,6 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  component-emitter@2.0.0:
-    resolution: {integrity: sha512-4m5s3Me2xxlVKG9PkZpQqHQR7bgpnN7joDMJ4yvVkVXngjoITG76IaZmzmywSeRTeTpc6N6r3H3+KyUurV8OYw==}
-    engines: {node: '>=18'}
-
   compressible@2.0.18:
     resolution: {integrity: sha512-AF3r7P5dWxL8MxyITRMlORQNaOA2IkAFaTr4k7BUumjPtRpGDTZpl0Pb1XCO6JeDCBdp126Cgs9sMxqSjgYyRg==}
     engines: {node: '>= 0.6'}
@@ -5114,9 +5107,6 @@ packages:
 
   http-response-object@3.0.2:
     resolution: {integrity: sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==}
-
-  http@0.0.1-security:
-    resolution: {integrity: sha512-RnDvP10Ty9FxqOtPZuxtebw1j4L/WiqNMDtuc1YMH1XQm5TgDRaR1G9u8upL6KD1bXHSp9eSXo/ED+8Q7FAr+g==}
 
   https-browserify@1.0.0:
     resolution: {integrity: sha512-J+FkSdyD+0mA0N+81tMotaRMfSL9SGi+xpD3T6YApKsc3bGSXJlfXri3VyFOeYkfLRQisDk1W+jIFFKBeUBbBg==}
@@ -6723,6 +6713,9 @@ packages:
       react: '*'
       react-native: '*'
 
+  react-native-stream@0.1.9:
+    resolution: {integrity: sha512-qA35cx5JKy3HMUvbcqeRGtT6kOsd1ciUyI4+tfCKwooj180z/OarjfZ25KzC/ybPAaW/zpR2Sk9XGRhKJBMa+w==}
+
   react-native-svg@15.11.2:
     resolution: {integrity: sha512-+YfF72IbWQUKzCIydlijV1fLuBsQNGMT6Da2kFlo1sh+LE3BIm/2Q7AR1zAAR6L0BFLi1WaQPLfFUC9bNZpOmw==}
     peerDependencies:
@@ -7271,9 +7264,6 @@ packages:
 
   stream-shift@1.0.3:
     resolution: {integrity: sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ==}
-
-  stream@0.0.3:
-    resolution: {integrity: sha512-aMsbn7VKrl4A2T7QAQQbzgN7NVc70vgF5INQrBXqn4dCXN1zy3L9HGgLO5s7PExmdrzTJ8uR/27aviW8or8/+A==}
 
   strict-uri-encode@2.0.0:
     resolution: {integrity: sha512-QwiXZgpRcKkhTj2Scnn++4PKtWsH0kpzZ62L2R6c/LUVYv7hVnZqcg2+sMuT6R7Jusu1vviK/MFsu6kNJfWlEQ==}
@@ -14081,8 +14071,6 @@ snapshots:
 
   commander@8.3.0: {}
 
-  component-emitter@2.0.0: {}
-
   compressible@2.0.18:
     dependencies:
       mime-db: 1.54.0
@@ -15548,8 +15536,6 @@ snapshots:
   http-response-object@3.0.2:
     dependencies:
       '@types/node': 10.17.60
-
-  http@0.0.1-security: {}
 
   https-browserify@1.0.0: {}
 
@@ -17508,6 +17494,11 @@ snapshots:
       react-native: 0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1)
       warn-once: 0.1.1
 
+  react-native-stream@0.1.9:
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
+
   react-native-svg@15.11.2(react-native@0.79.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1):
     dependencies:
       css-select: 5.2.2
@@ -18181,10 +18172,6 @@ snapshots:
       stream-chain: 2.2.5
 
   stream-shift@1.0.3: {}
-
-  stream@0.0.3:
-    dependencies:
-      component-emitter: 2.0.0
 
   strict-uri-encode@2.0.0: {}
 

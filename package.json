@@ -16,7 +16,7 @@
   "dependencies": {
     "@coinbase/wallet-mobile-sdk": "^1.0.13",
     "@craftzdog/react-native-buffer": "^6.1.0",
-    "@expo/vecto6r-icons": "^14.1.0",
+    "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/native": "^7.1.6",
@@ -37,7 +37,6 @@
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.6",
     "expo-web-browser": "~14.1.6",
-    "http": "0.0.1-security",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-native": "0.79.2",
@@ -50,9 +49,9 @@
     "react-native-reanimated": "3.17.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "4.10.0",
+    "react-native-stream": "^0.1.9",
     "react-native-svg": "15.11.2",
     "react-native-web": "0.20.0",
-    "stream": "^0.0.3",
     "stream-browserify": "^3.0.0",
     "thirdweb": "5.105.8"
   },
